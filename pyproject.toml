@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "newrelic-mcp"
+version = "0.1.0"
+description = "New Relic MCP Server for monitoring and analyzing application metrics"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "Kirtiranjan Sahoo"}
+]
+dependencies = [
+    "mcp-server",
+    "requests",
+    "python-dotenv",
+    "litellm",
+    "fastapi",
+    "uvicorn"
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.scripts]
+newrelic-mcp = "newrelic_mcp.cli:main"
+
+[tool.setuptools]
+packages = ["newrelic_mcp"]
+
+[tool.setuptools.entry-points.console_scripts]
+newrelic-mcp-run = "newrelic_mcp.cli:main" 
