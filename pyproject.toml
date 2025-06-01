@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "newrelic-mcp"
 version = "0.1.0"
-description = "New Relic MCP Server for monitoring and analyzing application metrics"
+description = "New Relic MCP Server for monitoring and metrics"
 readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
@@ -17,8 +17,6 @@ dependencies = [
     "requests",
     "python-dotenv",
     "litellm",
-    "fastapi",
-    "uvicorn"
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -29,8 +27,22 @@ classifiers = [
 [project.scripts]
 newrelic-mcp = "newrelic_mcp.cli:main"
 
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "black",
+    "isort",
+    "mypy",
+]
+
 [tool.setuptools]
 packages = ["newrelic_mcp"]
 
-[tool.setuptools.entry-points.console_scripts]
-newrelic-mcp-run = "newrelic_mcp.cli:main" 
+[tool.black]
+line-length = 100
+target-version = ["py38"]
+
+[tool.isort]
+profile = "black"
+line_length = 100
+multi_line_output = 3 
