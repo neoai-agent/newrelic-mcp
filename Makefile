@@ -35,7 +35,6 @@ build: clean
 	@echo "Built package version $(VERSION)"
 
 test:
-	$(PYTHON) -m pip install -e ".[dev]"
 	$(PYTHON) -m pytest tests/ -v
 
 upload: build

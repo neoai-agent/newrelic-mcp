@@ -4,7 +4,7 @@ setup(
     name="newrelic-mcp",
     version="0.1.0",
     description="New Relic MCP Server for monitoring and metrics",
-    python_requires=">=3.8",
+    python_requires=">=3.10",
     install_requires=[
         "mcp-server",
         "requests",
