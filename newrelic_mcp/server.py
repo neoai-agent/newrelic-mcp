@@ -12,13 +12,19 @@ logging.basicConfig(
 logger = logging.getLogger('newrelic_mcp')
 
 class NewRelicMCPServer:
-    def __init__(self, api_key: str, insights_api_key: str, account_id: str, model: str = "gpt-4"):
+    def __init__(self,
+                api_key: str,
+                insights_api_key: str,
+                account_id: str,
+                model: str = "gpt-4",
+                openai_api_key: str = None):
         self.mcp = FastMCP("newrelic-mcp")
         self.client = NewRelicClient(
             api_key=api_key,
             insights_api_key=insights_api_key,
             account_id=account_id,
-            model=model
+            model=model,
+            openai_api_key=openai_api_key
         )
         self._register_tools()
 
@@ -29,10 +35,18 @@ class NewRelicMCPServer:
         self.mcp.tool()(self.get_application_top_database_operations_details)
         self.mcp.tool()(self.get_transaction_breakdown_segments)
 
-    async def start(self, host: str = "0.0.0.0", port: int = 8000):
-        """Start the MCP server"""
-        await self.client.initialize_newrelic()
-        await self.mcp.start(host=host, port=port)
+    def run_mcp_blocking(self):
+        """
+        Runs the FastMCP server. This method is blocking and should be called
+        after any necessary asynchronous initialization (like self.client.initialize_newrelic)
+        has been completed in a separate AnyIO event loop.
+        """
+        # self.client.initialize_newrelic() is assumed to have been awaited
+        # before this synchronous method is called.
+        
+        # The FastMCP server's run method will internally call anyio.run()
+        # and manage its own event loop for stdio transport.
+        self.mcp.run(transport='stdio')
 
     async def get_newrelic_apm_metrics(self, application_name: str, time_range_minutes: int = 30) -> str:
         """

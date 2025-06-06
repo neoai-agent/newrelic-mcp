@@ -14,7 +14,12 @@ NR_API_BASE = "https://api.newrelic.com/v2"
 NR_INSIGHTS_API_BASE = "https://insights-api.newrelic.com/v1/accounts"
 
 class NewRelicClient:
-    def __init__(self, api_key: str, insights_api_key: str, account_id: str, model: str):
+    def __init__(self,
+                 api_key: str,
+                 insights_api_key: str,
+                 account_id: str,
+                 model: str,
+                 openai_api_key: str = None):
         self.headers = {
             "X-Api-Key": api_key,
             "Content-Type": "application/json"
@@ -27,6 +32,7 @@ class NewRelicClient:
         self.NR_API_BASE = NR_API_BASE
         self.NR_INSIGHTS_API_BASE = NR_INSIGHTS_API_BASE
         self.model = model
+        self.openai_api_key = openai_api_key
         self._application_id_cache = {}
         self._applications_available = []
 
@@ -113,6 +119,7 @@ class NewRelicClient:
         """
         logger.info(f"Finding application id for {application_name}")
         response = await acompletion(
+            api_key=self.openai_api_key,
             model=self.model or "gpt-4o-mini",
             messages=[{"role": "system", "content": system_prompt}],
         )
