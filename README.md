@@ -7,7 +7,7 @@ A command-line tool for monitoring and analyzing New Relic application metrics u
 Run directly with pipx (no installation needed):
 
 ```bash
-pipx run newrelic-mcp --new-relic-api-key "YOUR_API_KEY" --nr-insights-api-key "YOUR_INSIGHTS_KEY" --new-relic-account-id "YOUR_ACCOUNT_ID" --model "openai/gpt-4o-mini"
+pipx run newrelic-mcp --api-key="NR_API_KEY" --new-relic-api-key "YOUR_API_KEY" --insights-key "YOUR_NR_INSIGHTS_API_KEY" --account-id "YOUR_NR_ACCOUNT_ID" --model "openai/gpt-4o-mini"
 ```
 
 That's it! pipx will:

@@ -11,7 +11,7 @@ apm_metrics_available = [
 ]
 
 NR_API_BASE = "https://api.newrelic.com/v2"
-NR_INSIGHTS_API_BASE = "https://insights-api.newrelic.com/v1/accounts"
+NR_INSIGHTS_API_BASE = "https://insights-api.newrelic.com/v1"
 
 class NewRelicClient:
     def __init__(self,
@@ -114,7 +114,7 @@ class NewRelicClient:
         The list of applications available are:
         {self._applications_available}
 
-        You must return only the application id. No extra text or explanation.
+        You must return only the application id. No extra text or explanation. If you cannot find the application id, return "0" or check the fallback list of applications. and do not return any other text.
 
         """
         logger.info(f"Finding application id for {application_name}")
