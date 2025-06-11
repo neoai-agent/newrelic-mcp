@@ -3,6 +3,8 @@ from unittest.mock import Mock, patch
 import requests
 from datetime import datetime, timezone
 from newrelic_mcp.client import NewRelicClient
+import asyncio
+from unittest.mock import AsyncMock
 
 @pytest.fixture
 def client():
@@ -10,7 +12,8 @@ def client():
         api_key="test_api_key",
         insights_api_key="test_insights_key",
         account_id="123456",
-        model="gpt-4"
+        model="gpt-4",
+        openai_api_key="test_openai_key"
     )
 
 @pytest.fixture
@@ -61,12 +64,15 @@ def test_make_insights_request_error(mock_get, client):
 
 @patch('newrelic_mcp.client.NewRelicClient._make_request')
 def test_fetch_newrelic_applications_details(mock_make_request, client):
-    mock_make_request.return_value = {
+    # Mock a response object with a .json() method
+    mock_response = Mock()
+    mock_response.json.return_value = {
         "applications": [
             {"name": "App1", "id": 1},
             {"name": "App2", "id": 2}
         ]
     }
+    mock_make_request.return_value = mock_response
     result = client._fetch_newrelic_applications_details()
     assert len(result) == 2
     assert result[0]["name"] == "App1"
@@ -80,14 +86,15 @@ async def test_initialize_newrelic(mock_fetch, client):
     assert client._applications_available == [{"name": "App1", "id": 1}]
 
 @pytest.mark.asyncio
-@patch('litellm.acompletion')
+@patch('newrelic_mcp.client.acompletion', new_callable=AsyncMock)
 async def test_find_newrelic_application_id(mock_acompletion, client):
     # Setup test data
     client._applications_available = [
         {"name": "Test App", "id": 1},
         {"name": "Another App", "id": 2}
     ]
-    
+    client._application_id_cache = {}  # Ensure cache is empty
+
     # Mock the OpenAI response
     mock_response = Mock()
     mock_response.choices = [
@@ -99,22 +106,24 @@ async def test_find_newrelic_application_id(mock_acompletion, client):
         )
     ]
     mock_acompletion.return_value = mock_response
-    
-    # Test exact match
+
+    # Test exact match (should call acompletion)
     result = await client.find_newrelic_application_id("Test App")
     assert result == "1"
     assert "Test App" in client._application_id_cache
-    
-    # Test cache hit
+    assert mock_acompletion.call_count == 1
+
+    # Test cache hit (should NOT call acompletion again)
     result = await client.find_newrelic_application_id("Test App")
     assert result == "1"
-    mock_acompletion.assert_called_once()  # Verify OpenAI was only called once
-    
-    # Test with different app name
+    assert mock_acompletion.call_count == 1  # Still only called once
+
+    # Test with different app name (should call acompletion again)
     mock_response.choices[0].message.content = "2"
     result = await client.find_newrelic_application_id("Another App")
     assert result == "2"
     assert "Another App" in client._application_id_cache
+    assert mock_acompletion.call_count == 2
 
 @patch('newrelic_mcp.client.NewRelicClient._make_request')
 def test_get_apm_metrics_names(mock_make_request, client):

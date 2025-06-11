@@ -110,12 +110,21 @@ class NewRelicClient:
             return self._application_id_cache[application_name]
             
         system_prompt = f"""
-        Find the application id that best matches the application name "{application_name}" from the list of applications:
+        Find the application id that best matches the application name "{application_name}" from the list of applications.
         The list of applications available are:
         {self._applications_available}
 
-        You must return only the application id which is best match for the application name. No extra text or explanation. If you cannot find the application id, return "0" or check the fallback list of applications. and do not return any other text.
+        e.g list of applications:
+        [{"name": "App1", "id": 1}, {"name": "App2", "id": 2}]
+        input: App1
+        output: 1
 
+        Always prioritize production applications:
+        - if the application name is exactly the same as the application name in the list, return the application id
+        - if the application name is not exactly the same as the application name in the list, return the application id of the application that is the best match
+        - if the application name is not in the list, return the application id of the application that is the best match
+
+        You must return only the application id which is best match for the application name. No extra text or explanation. check the fallback list of applications. and do not return any other text.
         """
         logger.info(f"Finding application id for {application_name}")
         response = await acompletion(
