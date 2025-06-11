@@ -95,7 +95,7 @@ class NewRelicClient:
         returns a list of dict containing the application name and id.
         """
         response = self._make_request("applications.json")
-        applications = response.get("applications", [])
+        applications = response.json().get("applications", [])
         return [{"name": app["name"], "id": app["id"]} for app in applications]
     
     async def initialize_newrelic(self):
@@ -114,7 +114,7 @@ class NewRelicClient:
         The list of applications available are:
         {self._applications_available}
 
-        You must return only the application id. No extra text or explanation. If you cannot find the application id, return "0" or check the fallback list of applications. and do not return any other text.
+        You must return only the application id which is best match for the application name. No extra text or explanation. If you cannot find the application id, return "0" or check the fallback list of applications. and do not return any other text.
 
         """
         logger.info(f"Finding application id for {application_name}")
