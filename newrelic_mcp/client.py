@@ -95,8 +95,11 @@ class NewRelicClient:
         returns a list of dict containing the application name and id.
         """
         response = self._make_request("applications.json")
-        applications = response.json().get("applications", [])
-        return [{"name": app["name"], "id": app["id"]} for app in applications]
+        applications = response.get("applications", [])
+        logger.info(f"Found {len(applications)} applications")
+        applications_list = [{"name": app["name"], "id": app["id"]} for app in applications if app["health_status"] != "grey"]
+        return applications_list
+    
     
     async def initialize_newrelic(self):
         """
@@ -110,23 +113,19 @@ class NewRelicClient:
             return self._application_id_cache[application_name]
             
         system_prompt = f"""
-        Find the application id that best matches the application name "{application_name}" from the list of applications.
+        Find the application id that best matches the application name "{application_name}" from the available applications.
         The list of applications available are:
         {self._applications_available}
 
-        e.g list of applications:
-        [{"name": "App1", "id": 1}, {"name": "App2", "id": 2}]
-        input: App1
-        output: 1
-
-        Always prioritize production applications:
+        Important Guidelines:
         - if the application name is exactly the same as the application name in the list, return the application id
         - if the application name is not exactly the same as the application name in the list, return the application id of the application that is the best match
         - if the application name is not in the list, return the application id of the application that is the best match
 
-        You must return only the application id which is best match for the application name. No extra text or explanation. check the fallback list of applications. and do not return any other text.
+        You must return only the application id which is best match for the application name. No extra text or explanation. check the fallback list of applications. and do not return any other text. If no match is found do not return any text. 
         """
         logger.info(f"Finding application id for {application_name}")
+        logger.info(f"Applications list: {self._applications_available}")
         response = await acompletion(
             api_key=self.openai_api_key,
             model=self.model or "gpt-4o-mini",
@@ -182,7 +181,6 @@ class NewRelicClient:
         ORDER BY `Total Duration` DESC
         LIMIT 5
         """
-        logger.info(f"Slow transactions query: {query}")
         result = self._make_insights_request(query)
 
         if not result or "error" in result:
