@@ -8,10 +8,10 @@ Install directly from GitHub using pipx:
 
 ```bash
 # Install
-pipx install git+https://github.com/yourusername/newrelic-mcp.git
+pipx install git+https://github.com/neoai-agent/newrelic-mcp.git
 
 # Or run without installation
-pipx run git+https://github.com/yourusername/newrelic-mcp.git
+pipx run git+https://github.com/neoai-agent/newrelic-mcp.git
 ```
 
 ## Quick Start
@@ -108,7 +108,7 @@ await get_transaction_breakdown_segments(
 
 For development setup:
 ```bash
-git clone https://github.com/yourusername/newrelic-mcp.git
+git clone https://github.com/neoai-agent/newrelic-mcp.git
 cd newrelic-mcp
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
