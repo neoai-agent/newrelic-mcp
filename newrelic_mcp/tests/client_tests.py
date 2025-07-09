@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 from newrelic_mcp.client import NewRelicClient
 import asyncio
 from unittest.mock import AsyncMock
+import httpx
 
 @pytest.fixture
 def client():
@@ -20,8 +21,8 @@ def client():
 def mock_response():
     mock = Mock()
     mock.json.return_value = {"applications": [
-        {"name": "Test App 1", "id": 1},
-        {"name": "Test App 2", "id": 2}
+        {"name": "Test App 1", "id": 1, "health_status": "green"},
+        {"name": "Test App 2", "id": 2, "health_status": "green"}
     ]}
     mock.raise_for_status = Mock()
     return mock
@@ -64,15 +65,12 @@ def test_make_insights_request_error(mock_get, client):
 
 @patch('newrelic_mcp.client.NewRelicClient._make_request')
 def test_fetch_newrelic_applications_details(mock_make_request, client):
-    # Mock a response object with a .json() method
-    mock_response = Mock()
-    mock_response.json.return_value = {
+    mock_make_request.return_value = {
         "applications": [
-            {"name": "App1", "id": 1},
-            {"name": "App2", "id": 2}
+            {"name": "App1", "id": 1, "health_status": "green"},
+            {"name": "App2", "id": 2, "health_status": "green"}
         ]
     }
-    mock_make_request.return_value = mock_response
     result = client._fetch_newrelic_applications_details()
     assert len(result) == 2
     assert result[0]["name"] == "App1"
@@ -217,3 +215,32 @@ def test_get_transaction_details(mock_insights_request, client):
     assert result["transaction_name"] == "Test Transaction"
     assert result["response_time"] == 100
     assert result["throughput_per_minute"] == 5.0 
+
+@pytest.mark.asyncio
+@patch('httpx.AsyncClient.post')
+async def test_query_logs_async(mock_post, client):
+    # Mock the response from httpx.AsyncClient.post
+    mock_response = Mock()
+    mock_response.json.return_value = {
+        "data": {
+            "actor": {
+                "account": {
+                    "nrql": {
+                        "results": [
+                            {"message": "Error log", "level": "error"},
+                            {"message": "Info log", "level": "info"}
+                        ]
+                    }
+                }
+            }
+        }
+    }
+    mock_response.raise_for_status = Mock()
+    mock_post.return_value = mock_response
+
+    nrql_query = "SELECT * FROM Log LIMIT 2"
+    result = await client.query_logs(nrql_query)
+    assert "Error log" in result
+    assert "Info log" in result
+    assert "level: error" in result
+    assert "level: info" in result 

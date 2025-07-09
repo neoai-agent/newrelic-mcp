@@ -10,6 +10,7 @@ setup(
         "requests",
         "python-dotenv",
         "litellm",
+        "httpx",
     ],
     extras_require={
         "dev": [

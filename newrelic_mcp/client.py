@@ -2,6 +2,7 @@ import requests
 from datetime import datetime, timedelta, timezone
 from litellm import acompletion
 import logging
+import httpx
 
 logger = logging.getLogger(__name__)
 
@@ -12,6 +13,7 @@ apm_metrics_available = [
 
 NR_API_BASE = "https://api.newrelic.com/v2"
 NR_INSIGHTS_API_BASE = "https://insights-api.newrelic.com/v1"
+NR_GRAPHQL_API_BASE = "https://api.newrelic.com/graphql"
 
 class NewRelicClient:
     def __init__(self,
@@ -31,6 +33,7 @@ class NewRelicClient:
         self.account_id = account_id
         self.NR_API_BASE = NR_API_BASE
         self.NR_INSIGHTS_API_BASE = NR_INSIGHTS_API_BASE
+        self.NR_GRAPHQL_API_BASE = NR_GRAPHQL_API_BASE
         self.model = model
         self.openai_api_key = openai_api_key
         self._application_id_cache = {}
@@ -405,3 +408,66 @@ class NewRelicClient:
             "response_time": transaction_result.get("results", [])[0].get("average", 0),
             "throughput_per_minute": transaction_result.get("results", [])[1].get("result", 0)
         }
+    
+    async def query_logs(self, nrql_query: str) -> str:
+        """
+        Asynchronously query logs using New Relic GraphQL API with NRQL.
+        Returns formatted log results as a string.
+        """
+        graphql_query = f"""
+        {{
+            actor {{
+                account(id: {self.account_id}) {{
+                    nrql(query: \"{nrql_query}\") {{
+                        results
+                    }}
+                }}
+            }}
+        }}
+        """
+
+        headers = {
+            "Content-Type": "application/json",
+            "API-Key": self.headers.get("X-Api-Key")
+        }
+        payload = {"query": graphql_query}
+
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    self.NR_GRAPHQL_API_BASE,
+                    headers=headers,
+                    json=payload
+                )
+                response.raise_for_status()
+                result = response.json()
+
+                logger.debug("Response JSON: %s", result)
+
+                if "errors" in result:
+                    logger.error("GraphQL errors: %s", result["errors"])
+                    return f"GraphQL errors: {result['errors']}"
+
+                data = result.get("data")
+                if data is None:
+                    logger.error("No 'data' field in response")
+                    return "Error: No 'data' field in response"
+
+                account = data.get("actor", {}).get("account")
+                if account is None:
+                    logger.error("No 'account' field in 'actor'")
+                    return "Error: No 'account' field in 'actor'"
+
+                nrql = account.get("nrql")
+                if nrql is None:
+                    logger.error("No 'nrql' field in 'account'")
+                    return "Error: No 'nrql' field in 'account'"
+
+                logs = nrql.get("results", [])
+                formatted_logs = []
+                for log in logs:
+                    formatted_logs.append("---\n" + "\n".join(f"{k}: {v}" for k, v in log.items()))
+                return "\n".join(formatted_logs) if formatted_logs else "No logs found"
+        except Exception as e:
+            logger.error("Error querying logs: %s", str(e))
+            return f"Error querying logs: {str(e)}"

@@ -34,6 +34,7 @@ class NewRelicMCPServer:
         self.mcp.tool()(self.get_application_slow_transactions_details)
         self.mcp.tool()(self.get_application_top_database_operations_details)
         self.mcp.tool()(self.get_transaction_breakdown_segments)
+        self.mcp.tool()(self.query_logs)
 
     def run_mcp_blocking(self):
         """
@@ -226,3 +227,14 @@ class NewRelicMCPServer:
             "total_transaction_count": total_txn_count,
             "segments": breakdown_segments
         }
+    
+    async def query_logs(self, nrql_query: str) -> str:
+        """
+        Query logs using New Relic GraphQL API.
+        """
+        try:
+            result = await self.client.query_logs(nrql_query)
+            return result
+        except Exception as e:
+            logger.error(f"Error querying logs: {str(e)}")
+            return f"Error querying logs: {str(e)}"
