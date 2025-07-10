@@ -426,10 +426,7 @@ class NewRelicClient:
         }}
         """
 
-        headers = {
-            "Content-Type": "application/json",
-            "API-Key": self.headers.get("X-Api-Key")
-        }
+        headers = self.headers
         payload = {"query": graphql_query}
 
         try:
