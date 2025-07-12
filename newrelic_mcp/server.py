@@ -72,7 +72,7 @@ class NewRelicMCPServer:
 
     async def get_application_slow_transactions_details(self, application_name: str, time_range_minutes: int = 30):
         """
-        Get the top N slow transactions and their breakdown segments at application level. 
+        Get the top N slow transactions and their breakdown segments at newrelic application level.
         """
         app_id = await self.client.find_newrelic_application_id(application_name)
         transactions_result = self.client.get_slow_transactions(app_id, time_range_minutes)
@@ -112,7 +112,7 @@ class NewRelicMCPServer:
 
     async def get_application_top_database_operations_details(self, application_name: str, time_range_minutes: int = 30):
         """
-        Get the top N database operations at application level.
+        Get the top N database operations at newrelic application level.
         """
         app_id = await self.client.find_newrelic_application_id(application_name)
         application_top_database_operations = self.client.get_top_database_operations(app_id, time_range_minutes)
@@ -230,7 +230,15 @@ class NewRelicMCPServer:
     
     async def query_logs(self, nrql_query: str) -> str:
         """
-        Query logs using New Relic GraphQL API.
+        Query logs using New Relic GraphQL API with NRQL query.
+        Returns formatted log results as a string.
+        Example:
+        SELECT * FROM Log
+        WHERE appId = 1234567890
+        SINCE 1 hour ago
+        UNTIL now
+        LIMIT 100
+        ORDER BY timestamp DESC
         """
         try:
             result = await self.client.query_logs(nrql_query)

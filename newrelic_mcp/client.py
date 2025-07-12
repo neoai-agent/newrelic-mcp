@@ -409,9 +409,9 @@ class NewRelicClient:
             "throughput_per_minute": transaction_result.get("results", [])[1].get("result", 0)
         }
     
-    async def query_logs(self, nrql_query: str) -> str:
+    async def query_logs(self, nrql_query: str):
         """
-        Asynchronously query logs using New Relic GraphQL API with NRQL.
+        query logs using New Relic GraphQL API with NRQL.
         Returns formatted log results as a string.
         """
         graphql_query = f"""
@@ -428,6 +428,7 @@ class NewRelicClient:
 
         headers = self.headers
         payload = {"query": graphql_query}
+        logger.info(f"GraphQL query: {graphql_query}")
 
         try:
             async with httpx.AsyncClient() as client:
