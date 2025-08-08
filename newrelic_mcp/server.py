@@ -35,6 +35,7 @@ class NewRelicMCPServer:
         self.mcp.tool()(self.get_application_top_database_operations_details)
         self.mcp.tool()(self.get_transaction_breakdown_segments)
         self.mcp.tool()(self.query_logs)
+        self.mcp.tool()(self.db_query_performance)
 
     def run_mcp_blocking(self):
         """
@@ -233,12 +234,7 @@ class NewRelicMCPServer:
         Query logs using New Relic GraphQL API with NRQL query.
         Returns formatted log results as a string.
         Example:
-        SELECT * FROM Log
-        WHERE appId = 1234567890
-        SINCE 1 hour ago
-        UNTIL now
-        LIMIT 100
-        ORDER BY timestamp DESC
+        SELECT * FROM Log WHERE appId = 1234567890 SINCE 15 minutes ago UNTIL now LIMIT 5 ORDER BY timestamp DESC
         """
         try:
             result = await self.client.query_logs(nrql_query)
@@ -246,3 +242,34 @@ class NewRelicMCPServer:
         except Exception as e:
             logger.error(f"Error querying logs: {str(e)}")
             return f"Error querying logs: {str(e)}"
+        
+    async def db_query_performance(self, entity_guid: int, operation: str=None, table: str=None, system: str=None, time_range_minutes: int = 15):
+        """
+        Query database performance using New Relic GraphQL API with NRQL of a specific database operation.
+        entity_guid : New Relic entity guid of the database operation
+        operation : Database operation name
+        table : Database table name
+        system : Database system name
+        time_range_minutes : Time range in minutes to get data
+        Example: _select_key_value_store_keyvaluestore
+        entity_guid: 1234567890
+        operation: select
+        table: key_value_store_keyvaluestore
+        system: MySQL
+        time_range_minutes: 15
+        """
+        query_time_query = f"SELECT average(convert(apm.service.datastore.operation.duration, unit, 'ms')) FROM Metric WHERE (entity.guid = '{entity_guid}') AND ((`db.operation` = '{operation}' AND `db.sql.table` = '{table}' AND `db.system` = '{system}')) FACET `db.system`, `db.sql.table`, `db.operation` LIMIT 5 SINCE {time_range_minutes} minutes ago TIMESERIES UNTIL now"
+        
+        throughput_query = f"SELECT rate(count(apm.service.datastore.operation.duration), 1 minute) FROM Metric WHERE (entity.guid = '{entity_guid}') AND ((`db.operation` = '{operation}' AND `db.sql.table` = '{table}' AND `db.system` = '{system}')) LIMIT 5 SINCE {time_range_minutes} minutes ago TIMESERIES  facet concat(db.system, ' ', db.sql.table, ' ', db.operation) UNTIL now"
+
+        db_ops_caller_query = f"SELECT sum(apm.service.transaction.overview) as 'Database operation callers' FROM Metric WHERE (entity.guid = '{entity_guid}') AND ((`db.operation` = '{operation}' AND `db.sql.table` = '{table}' AND `db.system` = '{system}' AND metricName = 'apm.service.transaction.overview')) FACET `transactionName` LIMIT 5 SINCE {time_range_minutes} minutes ago UNTIL now"
+
+
+        query_time_result = await self.query_logs(query_time_query)
+        throughput_result = await self.query_logs(throughput_query)
+        db_ops_caller_result = await self.query_logs(db_ops_caller_query)
+        return {
+            "query_time_result": query_time_result,
+            "throughput_result": throughput_result,
+            "db_ops_caller_result": db_ops_caller_result
+        }
