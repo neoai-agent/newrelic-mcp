@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from litellm import acompletion
 import logging
 import httpx
+from backoff import on_exception, expo
 
 logger = logging.getLogger(__name__)
 
@@ -110,6 +111,7 @@ class NewRelicClient:
         """
         self._applications_available = self._fetch_newrelic_applications_details()
 
+    @on_exception(expo, Exception, max_time=30)
     async def find_newrelic_application_id(self, application_name: str):
     # Check cache first
         if application_name in self._application_id_cache:
@@ -131,7 +133,7 @@ class NewRelicClient:
         logger.info(f"Applications list: {self._applications_available}")
         response = await acompletion(
             api_key=self.openai_api_key,
-            model=self.model or "gpt-4o-mini",
+            model=self.model or "openai/gpt-4o-mini",
             messages=[{"role": "system", "content": system_prompt}],
         )
         app_id = response.choices[0].message.content
