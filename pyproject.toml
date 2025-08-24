@@ -7,16 +7,17 @@ name = "newrelic-mcp"
 version = "0.1.0"
 description = "New Relic MCP Server for monitoring and metrics"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [
     {name = "Kirtiranjan Sahoo"}
 ]
 dependencies = [
-    "mcp-server",
-    "requests",
-    "python-dotenv",
-    "litellm",
+    "mcp-server==0.1.4",
+    "requests==2.32.0",
+    "python-dotenv==1.0.0",
+    "litellm==1.75.0",
+    "httpx==0.28.1",
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -33,6 +34,11 @@ dev = [
     "black",
     "isort",
     "mypy",
+]
+build = [
+    "setuptools==80.9.0",
+    "build==1.0.0",
+    "twine==4.0.2",
 ]
 
 [tool.setuptools]

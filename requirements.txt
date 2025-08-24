@@ -1,10 +1,9 @@
-mcp-server>=0.1.0
-requests>=2.31.0
-python-dotenv>=1.0.0
-litellm>=1.0.0
-fastapi>=0.109.0
-uvicorn>=0.27.0
-setuptools>=61.0
-build>=1.0.0
-twine>=4.0.2  # For PyPI upload 
-httpx 
+mcp-server==0.1.4
+requests==2.32.0
+python-dotenv==1.0.0
+litellm==1.75.0
+setuptools==80.9.0
+build==1.0.0
+twine==4.0.2  # For PyPI upload 
+httpx==0.28.1
+backoff==2.2.0
