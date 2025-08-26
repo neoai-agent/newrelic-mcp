@@ -234,7 +234,7 @@ class NewRelicMCPServer:
         Query logs using New Relic GraphQL API with NRQL query.
         Returns formatted log results as a string.
         Example:
-        SELECT * FROM Log WHERE appId = 1234567890 SINCE 15 minutes ago UNTIL now LIMIT 5 ORDER BY timestamp DESC
+        SELECT * FROM Metric WHERE entity.guid = 'NDI1MTazfRFQTXxBNPBVSUNBVYlPTnwzQzc0CzM3OEc' SINCE 15 minutes ago UNTIL now LIMIT 5 ORDER BY timestamp DESC
         """
         try:
             result = await self.client.query_logs(nrql_query)
@@ -245,14 +245,14 @@ class NewRelicMCPServer:
         
     async def db_query_performance(self, entity_guid: int, operation: str=None, table: str=None, system: str=None, time_range_minutes: int = 15):
         """
-        Query database performance using New Relic GraphQL API with NRQL of a specific database operation.
+        Database query performance using New Relic GraphQL API with NRQL of a specific database operation.
         entity_guid : New Relic entity guid of the database operation
         operation : Database operation name
         table : Database table name
         system : Database system name
         time_range_minutes : Time range in minutes to get data
         Example: _select_key_value_store_keyvaluestore
-        entity_guid: 1234567890
+        entity_guid: NDI1MTazfRFQTXxBNPBVSUNBVYlPTnwzQzc0CzM3OEc
         operation: select
         table: key_value_store_keyvaluestore
         system: MySQL
