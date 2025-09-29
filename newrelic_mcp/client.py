@@ -47,7 +47,7 @@ class NewRelicClient:
             
         try:
             full_url = f"{self.NR_API_BASE}/{endpoint}"
-            logger.info(f"Making New Relic request to: {full_url}")
+            logger.debug(f"Making New Relic request to: {full_url}")
             response = requests.request(
                 method,
                 full_url,
@@ -73,7 +73,7 @@ class NewRelicClient:
         """
         try:
             url = f"{self.NR_INSIGHTS_API_BASE}/accounts/{self.account_id}/query"
-            logger.info(f"Making Insights API request with query: {query}")
+            logger.debug(f"Making Insights API request with query: {query}")
             
             response = requests.get(
                 url,
@@ -100,7 +100,7 @@ class NewRelicClient:
         """
         response = self._make_request("applications.json")
         applications = response.get("applications", [])
-        logger.info(f"Found {len(applications)} applications")
+        logger.debug(f"Found {len(applications)} applications")
         applications_list = [{"name": app["name"], "id": app["id"]} for app in applications if app["health_status"] != "grey"]
         return applications_list
     
@@ -130,7 +130,7 @@ class NewRelicClient:
         You must return only the application id which is best match for the application name. No extra text or explanation. check the fallback list of applications. and do not return any other text. If no match is found do not return any text. 
         """
         logger.info(f"Finding application id for {application_name}")
-        logger.info(f"Applications list: {self._applications_available}")
+        logger.debug(f"Applications list: {self._applications_available}")
         response = await acompletion(
             api_key=self.openai_api_key,
             model=self.model or "openai/gpt-4o-mini",
